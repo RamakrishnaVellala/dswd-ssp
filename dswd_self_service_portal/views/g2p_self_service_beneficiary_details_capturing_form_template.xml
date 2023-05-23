@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <template id="beneficiary_details_capturing_program_form" name="Beneficiary Details">
+        <t t-call="g2p_self_service_portal.self_service_form_template">
+            <div id="wrap" class="oe_structure oe_empty">
+                <section class="s_website_form pt16 pb16 o_colored_level" data-vcss="001"
+                    data-snippet="s_website_form"
+                    data-name="Form" style="background-image: none;">
+                    <div class="container">
+                        <form action="/website/form/" method="post"
+                            enctype="multipart/form-data" class="o_mark_required"
+                            data-mark="*" data-pre-fill="true" data-success-mode="redirect"
+                            data-success-page="/contactus-thank-you"
+                            data-model_name="res.partner">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="address_0_house_no">House number</label>
+                                    <input type="text" id="address_0_house_no" name="House_no" class="form-control" />
+                                    <label for="address_0_village">Village</label>
+                                    <input type="text" id="address_0_village" name="village" class="form-control" />
+                                    <label for="address_0_city">City</label>
+                                    <input type="text" id="address_0_city" name="city" class="form-control" />
+                                    <label for="address_0_district">District</label>
+                                    <input type="text" id="address_0_district" name="district" class="form-control" />
+                                    <label for="address_0_region">Region</label>
+                                    <input type="text" id="address_0_region" name="region" class="form-control" />
+                                    <label for="address_0_civil_status">Civil status</label>
+                                    <input type="text" id="address_0_civil_status" name="civil_status"
+                                        class="form-control" />
+                                    <label for="address_0_ocupation">Ocupation</label>
+                                    <input type="text" id="address_0_ocupation" name="ocupation" class="form-control" />
+                                    <label for="address_0_income">Income</label>
+                                    <input type="text" id="address_0_income" name="income" class="form-control" />
+                                </div>
+                           </div>
+                            <table class="table table-bordered caption-top"
+                                id="tbl_family_members">
+                                <caption style="caption-side: top;">Family Composition</caption>
+
+                                <tr>
+                                    <th>Complete Name</th>
+                                    <th>Relationship to the Beneficiary</th>
+                                    <th>Dob</th>
+                                    <th>Ocupation</th>
+                                    <th>Monthly Income</th>
+                                    <th></th>
+                                </tr>
+                                <tbody>
+                                    <tr id="tr_family_member_0">
+                                        <td id="td_family_member_0_name">
+                                            <input type="text" id="family_member_0_name"
+                                                name="family_member_0_name"
+                                                class="form-control" />
+                                        </td>
+                                        <td id="td_family_member_0_relations">
+                                            <select id="family_member_0_relations"
+                                                name="family_member_0_relations"
+                                                class="form-control">
+                                                <option for="family_member_0_relations"></option>
+                                                <t t-foreach="relations" t-as="rel">
+                                                    <option for="family_member_0_relations">
+                                                        <t t-esc="rel" />
+                                                    </option>
+                                                </t>
+
+                                            </select>
+                                        </td>
+                                        <td id="td_family_member_0_dob">
+                                            <input type="date" id="family_member_0_dob"
+                                                name="family_member_0_dob"
+                                                class="form-control" />
+                                        </td>
+                                        <td id="td_family_member_0_occupation">
+                                            <input type="text" id="family_member_0_occupation"
+                                                name="family_member_0_occupation"
+                                                class="form-control" />
+                                        </td>
+                                        <td id="td_family_member_0_income">
+                                            <input type="currency" id="family_member_0_income"
+                                                name="family_member_0_income"
+                                                class="form-control" />
+                                        </td>
+                                        <td>
+                                            <button type="button" onclick="add_new_row(this)">
+                                                Add</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                        </form>
+                    </div>
+                </section>
+            </div>
+        </t>
+
+    </template>
+</odoo>
