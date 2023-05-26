@@ -157,10 +157,10 @@ class DswdSelfServicePortal(http.Controller):
     def self_service_apply_programs(self, _id):
         self.self_service_check_roles("REGISTRANT")
 
-        relations=self.get_relationships()
-        print(relations)
-        family_details=self.get_family_details()
-        print(family_details)
+        # relations = ["", "Father", "Mother", "Spouse"];
+
+        # family_details=self.get_family_details()
+
         program = request.env["g2p.program"].sudo().browse(_id)
         multiple_form_submission = program.multiple_form_submission
         current_partner = request.env.user.partner_id
@@ -183,8 +183,8 @@ class DswdSelfServicePortal(http.Controller):
                 "program": program.name,
                 "program_id": program.id,
                 "user": request.env.user.given_name,
-                "relations" : relations  ,
-                "family_details":family_details
+                # "relations" : relations  ,
+                # "family_details":family_details
         })
 
     @http.route(
@@ -199,6 +199,7 @@ class DswdSelfServicePortal(http.Controller):
         program = request.env["g2p.program"].sudo().browse(_id)
         current_partner = request.env.user.partner_id
         program_member = None
+        
         prog_membs = (
             request.env["g2p.program_membership"]
             .sudo()
@@ -224,15 +225,53 @@ class DswdSelfServicePortal(http.Controller):
                     )
                 )
             form_data = kwargs
-            print(kwargs)
-            # Hardcoding Account number from form data for now
-            account_num = form_data.get("Account Number", None)
-            if account_num:
-                if len(current_partner.bank_ids) > 0:
-                    # TODO: Fixing value of first account number for now, if more than one exists
-                    current_partner.bank_ids[0].acc_number = account_num
-                else:
-                    current_partner.bank_ids = [(0, 0, {"acc_number": account_num})]
+
+        # saving the data into relationships table
+            family_details = json.loads(self.get_family_details().data)
+           
+            family_member_count= int(form_data.get("family_member_count",0))
+            print(family_member_count)
+            family_members=[]
+            current_partner_rels=[]
+            for i in range(len(family_details)+1,family_member_count+1):
+                name = form_data.get(f"family_member_{i}_name")
+                print(name)
+                # if not name:
+                # # Handle the case when the name is missing
+                #     continue
+                relationship_name = form_data.get(f"family_member_{i}_relations")
+                relationship = request.env["g2p.relationship"].sudo().search([('name','=',relationship_name)])
+                dob = form_data.get(f"family_member_{i}_dob")
+                occupation = form_data.get(f"family_member_{i}_occupation")
+                income = form_data.get(f"family_member_{i}_montly_income")
+                family_members.append({
+                    "name":name,
+                    "birthdate":dob,
+                    "is_registrant":True,
+                    "is_group":False,
+                    # "related_1_ids":[(0,0,{
+                    #     'source':current_partner.id,
+                    #     'relation':relationship.id,
+                    # })],
+                    "related_2_ids":[(0,0,{
+                        'destination':current_partner.id,
+                        'relation':relationship.id,
+                    })],
+                    "occupation":occupation,
+                    "income":income
+                    })   
+                
+            if family_members:
+                family_member_partners=request.env["res.partner"].sudo().create(family_members)
+                # existing_family_members=len(family_details)
+                # for i in range(family_member_count-existing_family_members):
+                #     relationship_name = form_data.get(f"family_member_{existing_family_members+i+1}_relations")
+                #     relationship = request.env["g2p.relationship"].sudo().search([('name_inverse','=',relationship_name)])
+                #     current_partner_rels.append((0,0,{
+                #             'destination':family_member_partners[i].id,
+                #             'relation':relationship.id,
+                #         }))   
+
             program_registrant_info_ids = (
                 request.env["g2p.program.registrant_info"]
                 .sudo()
@@ -255,6 +294,7 @@ class DswdSelfServicePortal(http.Controller):
                     "registrant_id": current_partner.id,
                 }
             )
+
         else:
             if not program_member:
                 return request.redirect(f"/selfservice/apply/{_id}")
@@ -267,44 +307,29 @@ class DswdSelfServicePortal(http.Controller):
                 "user": current_partner.given_name.capitalize(),
             },
         )
+    
+    @http.route('/get_relationships', type='http', auth="user", website=True)
     def get_relationships(self):
         relationships = request.env["g2p.relationship"].sudo().search([])
         rel_list = []
         for rel in relationships:
             rel_list.append(rel.name)
-
-        return (
-            rel_list
-        )
-   
+        relation_list=json.dumps(rel_list)
+        return relation_list
+    
+    @http.route('/get_family_details', type='http', auth="user", website=True)
     def get_family_details(self):
         reg_rel = request.env["g2p.reg.rel"].sudo().search([("destination", "=", request.env.user.partner_id.id)])
         family_details = []
         for rel in reg_rel:
             family_details.append({
                 "name": rel.source.name,
-                "relation": rel.relation.name,
-                "dob": rel.source.birthdate,
-                "ocupation": rel.source.occupation,
+                "relation": rel.relation_as_str,
+                "dob": str(rel.source.birthdate),
+                "occupation": rel.source.occupation,
                 "income": rel.source.income
             })
 
-        return (
-            family_details
-        )
-#     @http.route('/dswd_self_service_portal/dswd_self_service_portal', auth='public')
-#     def index(self, **kw):
-#         return "Hello, world"
-
-#     @http.route('/dswd_self_service_portal/dswd_self_service_portal/objects', auth='public')
-#     def list(self, **kw):
-#         return http.request.render('dswd_self_service_portal.listing', {
-#             'root': '/dswd_self_service_portal/dswd_self_service_portal',
-#             'objects': http.request.env['dswd_self_service_portal.dswd_self_service_portal'].search([]),
-#         })
-
-#     @http.route('/dswd_self_service_portal/dswd_self_service_portal/objects/<model("dswd_self_service_portal.dswd_self_service_portal"):obj>', auth='public')
-#     def object(self, obj, **kw):
-#         return http.request.render('dswd_self_service_portal.object', {
-#             'object': obj
-#         })
+        family_list=json.dumps(family_details)
+  
+        return family_list
